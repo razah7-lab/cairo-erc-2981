@@ -7,6 +7,7 @@ version = "0.0.0"
 [[target.starknet-contract]]
 allowed-libfuncs-list.name = "audited"
 casm = true
+sierra = true
 
 [dependencies]
 starknet = ">=2.3.0-rc0"
