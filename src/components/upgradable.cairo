@@ -42,37 +42,43 @@ mod upgradable {
 
 #[cfg(test)]
 mod test {
-    // Local deps
+    // Local imports
 
-    use super::upgradable as upgradable;
+    use super::upgradable;
+    use upgradable::Upgradable;
 
     // Contract
 
     #[starknet::contract]
     mod contract {
-        use super::upgradable as upgradable;
+        use super::upgradable as upgradable_component;
 
-        component!(path: upgradable, storage: upgradable, event: UpgradableEvent);
-        impl Upgradable = upgradable::UpgradableImpl<ContractState>;
+        component!(path: upgradable_component, storage: upgradable, event: UpgradableEvent);
+        impl Upgradable = upgradable_component::UpgradableImpl<ContractState>;
 
         #[storage]
         struct Storage {
             #[substorage(v0)]
-            upgradable: upgradable::Storage
+            upgradable: upgradable_component::Storage
         }
 
         #[event]
         #[derive(Drop, starknet::Event)]
         enum Event {
-            UpgradableEvent: upgradable::Event
+            UpgradableEvent: upgradable_component::Event
+        }
+    }
+
+    // State
+
+    type State = upgradable::ComponentState<contract::ContractState>;
+    impl StateDefault of Default<State> {
+        fn default() -> State {
+            upgradable::component_state_for_testing()
         }
     }
 
     // Constants
-
-    fn STATE() -> contract::ContractState {
-        contract::unsafe_new_contract_state()
-    }
 
     fn ZERO() -> starknet::ClassHash {
         starknet::class_hash_const::<0>()
@@ -83,8 +89,7 @@ mod test {
     #[test]
     #[available_gas(250_000)]
     fn test_upgrade() {
-        // [Setup]
-        let mut state = STATE();
-        contract::Upgradable::upgrade(ref state, ZERO());
+        let mut state: State = Default::default();
+        state.upgrade(ZERO());
     }
 }
